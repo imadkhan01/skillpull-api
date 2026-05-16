@@ -1,0 +1,52 @@
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: skillpull
+      POSTGRES_PASSWORD: skillpull
+      POSTGRES_DB: skillpull
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+
+  api:
+    build: .
+    environment:
+      APP_ENV: local
+      DATABASE_URL: postgresql+psycopg://skillpull:skillpull@postgres:5432/skillpull
+      REDIS_URL: redis://redis:6379/0
+      JWT_SECRET: change-me
+      JWT_ALGORITHM: HS256
+      ACCESS_TOKEN_EXPIRE_MINUTES: "60"
+      GOOGLE_CLIENT_ID: ""
+      GOOGLE_CLIENT_SECRET: ""
+      GOOGLE_REDIRECT_URI: "http://localhost:8000/api/auth/google/callback"
+      CORS_ORIGINS: "http://localhost:3000"
+    depends_on:
+      - postgres
+      - redis
+    ports:
+      - "8000:8000"
+
+  worker:
+    build: .
+    command: celery -A app.worker.celery_app worker --loglevel=INFO
+    environment:
+      APP_ENV: local
+      DATABASE_URL: postgresql+psycopg://skillpull:skillpull@postgres:5432/skillpull
+      REDIS_URL: redis://redis:6379/0
+      JWT_SECRET: change-me
+      JWT_ALGORITHM: HS256
+      ACCESS_TOKEN_EXPIRE_MINUTES: "60"
+    depends_on:
+      - postgres
+      - redis
+
+volumes:
+  postgres_data:

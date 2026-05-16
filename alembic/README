@@ -1,0 +1,4 @@
+"""create initial tables
+
+This file exists so the alembic folder is created. Migrations live in versions/.
+"""
